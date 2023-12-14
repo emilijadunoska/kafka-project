@@ -10,6 +10,8 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 
@@ -39,16 +41,18 @@ public class ReservationsProducer {
         GenericRecord avroRecord = new GenericData.Record(schema);
 
         String reservationId = String.valueOf((int)(Math.random() * (10000 - 0 + 1) + 1));
+        String randomDate = generateRandomDate();
+
+
         avroRecord.put("reservation_id", reservationId);
+        avroRecord.put("date", randomDate);
         avroRecord.put("user_id", Integer.valueOf(rand.nextInt((9-1)) + 1));
-        avroRecord.put("user_username", "user_" + String.valueOf(rand.nextInt(1000)));
         avroRecord.put("room_id", Integer.valueOf(rand.nextInt((9-1)) + 1));
-        String[] roomTypes = {"STANDARD", "DELUXE", "SUITE", "SINGLE", "DOUBLE", "TWIN"};
-        avroRecord.put("room_type", roomTypes[rand.nextInt(roomTypes.length)]);
         avroRecord.put("room_pricePerNight", Double.valueOf(rand.nextDouble() * (100 - 50) + 50));
-        avroRecord.put("reservation_cost_without_services", Double.valueOf(rand.nextDouble() * (500 - 200) + 200));
-        avroRecord.put("booked_services", "your_booked_services");
-        avroRecord.put("additional_services_price", Double.valueOf(rand.nextDouble() * (100 - 10) + 10));
+
+        double roomPricePerNight = (Double) avroRecord.get("room_pricePerNight");
+        double totalReservationCost = calculateTotalReservationCost(roomPricePerNight);
+        avroRecord.put("total_reservation_cost", totalReservationCost);
 
         ProducerRecord<Object, Object> producerRecord = new ProducerRecord<>(TOPIC, reservationId, avroRecord);
         return producerRecord;
@@ -59,14 +63,11 @@ public class ReservationsProducer {
         Schema schema = SchemaBuilder.record("Reservation")
                 .fields()
                 .requiredString("reservation_id")
+                .requiredString("date")
                 .requiredInt("user_id")
-                .requiredString("user_username")
                 .requiredInt("room_id")
-                .requiredString("room_type")
                 .requiredDouble("room_pricePerNight")
-                .requiredDouble("reservation_cost_without_services")
-                .requiredString("booked_services")
-                .requiredDouble("additional_services_price")
+                .requiredDouble("total_reservation_cost")
                 .endRecord();
 
         KafkaProducer producer = createProducer();
@@ -80,5 +81,20 @@ public class ReservationsProducer {
             Thread.sleep(10000);
         }
     }
+
+    private static String generateRandomDate() {
+        long startDateMillis = System.currentTimeMillis() - (365 * 24 * 60 * 60 * 1000L);
+        long endDateMillis = System.currentTimeMillis();
+        long randomDateMillis = startDateMillis + (long) (Math.random() * (endDateMillis - startDateMillis));
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        return dateFormat.format(new Date(randomDateMillis));
+    }
+
+    private static double calculateTotalReservationCost(double roomPricePerNight) {
+
+        return roomPricePerNight * 3;
+    }
+
 
 }

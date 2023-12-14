@@ -43,8 +43,18 @@ public class ReservationsConsumer {
             while (true) {
                 ConsumerRecords<String, GenericRecord> records = consumer.poll(2000);
                 for (ConsumerRecord<String, GenericRecord> record : records) {
-                    System.out.printf("offset = %d, key = %s, value = %s \n", record.offset(), record.key(), record.value());
+                    System.out.println("[CONSUMER RECORD]");
+                    System.out.println("  Offset: " + record.offset());
+                    System.out.println("  Key: " + record.key());
+                    System.out.println("  Value:");
+
+                    record.value().getSchema().getFields().forEach(field -> {
+                        System.out.println("    " + field.name() + ": " + record.value().get(field.name()));
+                    });
+
+                    System.out.println();
                 }
+
             }
         } finally {
             consumer.close();
