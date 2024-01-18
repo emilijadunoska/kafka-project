@@ -85,15 +85,6 @@ public class ReservationsProducer {
 
         KafkaProducer producer = createProducer();
 
-
-//        while (true) {
-//            ProducerRecord record = generateRecord(schema);
-//            producer.send(record);
-//
-//            System.out.println("[RECORD] Sent new reservation object.");
-//            Thread.sleep(10000);
-//        }
-
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             String line;
             while ((line = reader.readLine()) != null) {
